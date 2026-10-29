@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live-Coach Biomécanique Edge/Cloud (Zéro-Média Privacy)</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- En-tête Global -->
+    <header>
+      <div class="brand">
+        <h1>Live-Coach Edge / Cloud</h1>
+        <span class="privacy-badge">
+          🛡️ ZÉRO VIDÉO / AUDIO ENREGISTRÉS — Traitement VRAM éphémère
+        </span>
+      </div>
+      <div class="system-status">
+        <div class="agent-indicator">
+          <span class="dot green"></span>
+          <span><strong>Agent 1 (Edge)</strong> : WebGPU / 60 Hz</span>
+        </div>
+        <div class="agent-indicator">
+          <span id="cloud-status-dot" class="dot green"></span>
+          <span id="cloud-status-text"><strong>Agent 2 (Cloud)</strong> : Connecté WebSocket</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Conteneur Principal -->
+    <main class="container">
+      <!-- Colonne Gauche : Caméra / Simulateur + Canvas HUD Haute Visibilité -->
+      <section class="viewport-card">
+        <div class="viewport-header">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-weight: 700; font-size: 0.85rem;">SURVEILLANCE BIOMÉCANIQUE (SQUAT)</span>
+            <span id="mode-status" class="status-tag sim">Mode Simulateur Actif</span>
+          </div>
+          <span style="font-size: 0.75rem; color: #9ca3af;">Accessibilité : Malentendants (HUD) & Malvoyants (Earcons + TTS)</span>
+        </div>
+
+        <div class="viewport-container">
+          <video id="webcam-video" playsinline muted></video>
+          <canvas id="pose-canvas"></canvas>
+
+          <!-- Couche HUD Superposée -->
+          <div class="hud-overlay">
+            <!-- Bandeau Coach XXL (Accessible Malentendants) -->
+            <div id="coach-toast" class="coach-toast hidden">
+              <span class="toast-badge">CONSIGNE DU COACH</span>
+              <span id="toast-text" class="toast-text">Pousse le sol et écarte les genoux !</span>
+            </div>
+
+            <!-- Jauge de tempo latérale -->
+            <div class="tempo-gauge-container">
+              <span class="tempo-label">TEMPO</span>
+              <div class="tempo-bar">
+                <div id="tempo-bar-fill" class="tempo-bar-fill"></div>
+              </div>
+            </div>
+
+            <!-- Compteur de Répétitions et Statut de Phase -->
+            <div class="hud-top-right">
+              <div class="rep-badge">
+                <div class="label">Reps</div>
+                <div id="rep-count" class="count">0</div>
+              </div>
+              <div id="phase-pill" class="phase-pill">PRÊT</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panneau de Contrôles & Simulateur -->
+        <div class="controls-bar">
+          <div class="controls-row">
+            <button id="btn-webcam" class="btn-primary">
+              Activer la Webcam (WebGPU)
+            </button>
+
+            <!-- Toggles Accessibilité -->
+            <div class="accessibility-toggles">
+              <label class="toggle-label" title="Retours sonores rythmiques (Earcons) pour personnes malvoyantes">
+                <input type="checkbox" id="toggle-audio" checked />
+                <span>🔊 Bips rythmiques (Earcons)</span>
+              </label>
+              <label class="toggle-label" title="Lecture vocale des corrections du coach pour personnes malvoyantes">
+                <input type="checkbox" id="toggle-tts" checked />
+                <span>🗣️ Synthèse vocale (TTS)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Banc d'essai d'anomalies (Simulateur biomécanique pour test sans caméra) -->
+          <div class="scenarios-section">
+            <div class="scenarios-title">
+              Banc d'Essai d'Anomalies (Test instantané de l'Agent 1 & Agent 2)
+            </div>
+            <div class="scenario-buttons">
+              <button id="btn-sim-nominal" class="btn-scenario active">
+                🟢 Squat Nominal
+              </button>
+              <button id="btn-sim-valgus" class="btn-scenario">
+                ⚠️ Valgus Genoux
+              </button>
+              <button id="btn-sim-fast" class="btn-scenario">
+                ⚠️ Descente Trop Rapide
+              </button>
+              <button id="btn-sim-depth" class="btn-scenario">
+                ⚠️ Demi-Squat
+              </button>
+              <button id="btn-sim-torso" class="btn-scenario">
+                ⚠️ Buste Penché
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Colonne Droite : Télémétrie, Évolution & Inspecteur Cloud -->
+      <aside class="sidebar">
+        <!-- Carte 1 : Tableau de bord de Progression Multi-Facteurs (Stocké en Base) -->
+        <div class="telemetry-card">
+          <div class="card-title">
+            <span>Évolution & Progression du Geste</span>
+            <span style="font-size: 0.75rem; color: #34d399; font-weight: 800;">
+              Score Global : <span id="score-global">100%</span>
+            </span>
+          </div>
+
+          <!-- Facteurs biomécaniques scorés -->
+          <div class="progression-factors">
+            <div class="factor-row">
+              <div class="factor-info">
+                <span>🛡️ Stabilité (Valgus)</span>
+                <span id="score-stability" class="factor-val">100%</span>
+              </div>
+              <div class="score-bar-bg">
+                <div id="bar-stability" class="score-bar-fill" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="factor-row">
+              <div class="factor-info">
+                <span>⏱️ Contrôle Tempo (3s)</span>
+                <span id="score-tempo" class="factor-val">100%</span>
+              </div>
+              <div class="score-bar-bg">
+                <div id="bar-tempo" class="score-bar-fill" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="factor-row">
+              <div class="factor-info">
+                <span>📏 Profondeur (&le; 95°)</span>
+                <span id="score-depth" class="factor-val">100%</span>
+              </div>
+              <div class="score-bar-bg">
+                <div id="bar-depth" class="score-bar-fill" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="factor-row">
+              <div class="factor-info">
+                <span>🧘 Posture Buste (&le; 32°)</span>
+                <span id="score-posture" class="factor-val">100%</span>
+              </div>
+              <div class="score-bar-bg">
+                <div id="bar-posture" class="score-bar-fill" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <button id="btn-end-session" class="btn-primary" style="background: #059669; width: 100%;">
+              Terminer la Série & Obtenir le Bilan Cloud
+            </button>
+            <pre id="debrief-box" class="debrief-box hidden"></pre>
+          </div>
+        </div>
+
+        <!-- Carte 2 : Télémétrie Instantanée 60 Hz -->
+        <div class="telemetry-card">
+          <div class="card-title">
+            <span>Télémétrie Cinématique Locale</span>
+            <span style="font-size: 0.7rem; color: #10b981;">60 Hz</span>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <div class="label">Angle Genou</div>
+              <div id="metric-knee-angle" class="value">180°</div>
+            </div>
+            <div class="metric-box">
+              <div class="label">Angle Buste</div>
+              <div id="metric-torso-angle" class="value">0°</div>
+            </div>
+            <div class="metric-box">
+              <div class="label">Ratio Valgus</div>
+              <div id="metric-valgus-ratio" class="value">1.0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Carte 3 : Inspecteur Événementiel Agent 1 -> Agent 2 -->
+        <div class="cloud-inspector-card">
+          <div class="card-title">
+            <span>Pont Événementiel Agent 1 ➔ Agent 2</span>
+            <span style="font-size: 0.7rem; color: #3b82f6;">Zéro Pixel / Purement Métrique</span>
+          </div>
+
+          <div style="font-size: 0.7rem; color: #9ca3af; font-weight: 700;">
+            PROMPT ENVOYÉ AU CLOUD SUR ANOMALIE :
+          </div>
+          <pre id="last-prompt-display" class="prompt-box">En attente d'une anomalie détectée par l'Agent 1...</pre>
+
+          <div style="font-size: 0.7rem; color: #9ca3af; font-weight: 700;">
+            CONSIGNE GÉNÉRÉE PAR L'AGENT 2 (CLOUD LLM) :
+          </div>
+          <div id="last-response-display" class="response-box">
+            En attente d'intervention...
+          </div>
+        </div>
+
+        <!-- Carte 4 : Journal d'Audit de Confidentialité (Base SQLite) -->
+        <div class="audit-card">
+          <div class="card-title">
+            <span>Journal d'Audit de Confidentialité (SQLite)</span>
+            <button id="btn-clear-logs" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.75rem;">
+              Effacer
+            </button>
+          </div>
+          <div class="table-wrapper">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Heure</th>
+                  <th>Anomalie</th>
+                  <th>Rep</th>
+                  <th>Conseil Fourni</th>
+                  <th>Latence</th>
+                </tr>
+              </thead>
+              <tbody id="audit-table-body">
+                <tr>
+                  <td colspan="5" class="empty-log">
+                    Aucun incident pour le moment (Mouvement nominal).
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
