@@ -1,4 +1,5 @@
 import { SquatPhase } from './types';
+import { getLocale } from './i18n';
 
 /**
  * Gestionnaire d'accessibilité universelle :
@@ -10,6 +11,7 @@ export class AccessibilityManager {
   private isAudioEnabled = true;
   private isTtsEnabled = true;
   private frenchVoice: SpeechSynthesisVoice | null = null;
+  private englishVoice: SpeechSynthesisVoice | null = null;
 
   constructor() {
     this.initVoices();
@@ -19,7 +21,8 @@ export class AccessibilityManager {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       const loadVoice = () => {
         const voices = window.speechSynthesis.getVoices();
-        this.frenchVoice = voices.find(v => v.lang.startsWith('fr')) || null;
+        this.frenchVoice = voices.find((v) => v.lang.startsWith('fr')) || null;
+        this.englishVoice = voices.find((v) => v.lang.startsWith('en')) || null;
       };
       loadVoice();
       window.speechSynthesis.onvoiceschanged = loadVoice;
@@ -155,10 +158,15 @@ export class AccessibilityManager {
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(cueText);
-    utterance.lang = 'fr-FR';
-    if (this.frenchVoice) {
+    const isEnglish = getLocale() === 'en';
+    utterance.lang = isEnglish ? 'en-US' : 'fr-FR';
+
+    if (isEnglish && this.englishVoice) {
+      utterance.voice = this.englishVoice;
+    } else if (!isEnglish && this.frenchVoice) {
       utterance.voice = this.frenchVoice;
     }
+
     utterance.rate = 1.15; // Débit légèrement dynamique pour coller au rythme sportif
     utterance.pitch = 1.0;
     utterance.volume = 1.0;

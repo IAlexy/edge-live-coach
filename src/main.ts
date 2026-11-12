@@ -6,6 +6,7 @@ import { AccessibilityManager } from './accessibility';
 import { Agent2Bridge } from './agent2_bridge';
 import { GestureSimulator, SimulationScenario } from './simulator';
 import { Point3D, AnomalyEvent, CloudAuditEntry, RepScores } from './types';
+import { applyDomTranslations, getLocale, onLocaleChange, setLocale, t } from './i18n';
 
 function escapeHtml(unsafe: string): string {
   return unsafe
@@ -47,6 +48,7 @@ export class LiveCoachApp {
   private modeStatusEl = document.getElementById('mode-status') as HTMLElement;
   private cloudStatusDot = document.getElementById('cloud-status-dot') as HTMLElement;
   private cloudStatusText = document.getElementById('cloud-status-text') as HTMLElement;
+  private langSelectEl = document.getElementById('lang-select') as HTMLSelectElement | null;
 
   // Éléments du tableau de bord de progression (Multi-facteurs)
   private scoreGlobalEl = document.getElementById('score-global') as HTMLElement;
@@ -77,6 +79,7 @@ export class LiveCoachApp {
   private animationFrameId: number | null = null;
   private lastTimestamp = performance.now();
   private toastTimeout: ReturnType<typeof setTimeout> | null = null;
+  private unsubscribeLocale: (() => void) | null = null;
 
   constructor(options: LiveCoachOptions = {}) {
     const { autoConnectWs = true, initMediaPipe = true, startLoop = true } = options;
@@ -91,6 +94,7 @@ export class LiveCoachApp {
           this.renderAuditLogs(logs);
         },
         onCoachingCueReceived: (feedback) => {
+          this.lastResponseEl.removeAttribute('data-i18n');
           this.lastResponseEl.textContent = feedback.visualCue;
           this.showToast(feedback.visualCue, feedback.actionZone);
           this.accessibility.speakCue(feedback.audioCue);
@@ -98,16 +102,18 @@ export class LiveCoachApp {
         onConnectionStatusChanged: (connected) => {
           if (connected) {
             this.cloudStatusDot.className = 'dot green';
-            this.cloudStatusText.textContent = 'Agent 2 (Cloud) : Connecté WebSocket';
+            this.cloudStatusText.setAttribute('data-i18n', 'header.agent2Connected');
+            this.cloudStatusText.textContent = t('header.agent2Connected');
           } else {
             this.cloudStatusDot.className = 'dot blue';
-            this.cloudStatusText.textContent = 'Agent 2 (Cloud) : Mode Réflexe Local';
+            this.cloudStatusText.setAttribute('data-i18n', 'header.agent2Local');
+            this.cloudStatusText.textContent = t('header.agent2Local');
           }
         },
         onDebriefReceived: (debriefText) => {
           this.debriefBox.textContent = debriefText;
           this.debriefBox.classList.remove('hidden');
-          this.accessibility.speakCue('Voici le bilan de progression de ta série.');
+          this.accessibility.speakCue(t('progression.debriefTtsAnnouncement'));
         }
       },
       autoConnectWs
@@ -125,13 +131,31 @@ export class LiveCoachApp {
         this.repCounterEl.textContent = repCount.toString();
         this.accessibility.playPhaseEarcon('COMPLETED');
         this.showToast(
-          `Répétition #${repCount} validée (${durationSec}s) — Score : ${scores.global}%`,
+          t('hud.repValidated', {
+            rep: repCount,
+            duration: durationSec,
+            score: scores.global
+          }),
           'NOMINAL'
         );
 
         this.updateScoresUI(scores);
         this.agent2Bridge.sendRepScores(repCount, scores, durationSec);
       }
+    });
+
+    if (this.langSelectEl) {
+      this.langSelectEl.value = getLocale();
+    }
+    applyDomTranslations(document);
+
+    this.unsubscribeLocale = onLocaleChange((locale) => {
+      if (this.langSelectEl && this.langSelectEl.value !== locale) {
+        this.langSelectEl.value = locale;
+      }
+      applyDomTranslations(document);
+      this.updatePhaseUI(this.detector.currentPhase);
+      this.renderAuditLogs(this.agent2Bridge.logs);
     });
 
     this.bindEvents();
@@ -167,6 +191,10 @@ export class LiveCoachApp {
 
     this.toggleTts?.addEventListener('change', (e) => {
       this.accessibility.setTtsEnabled((e.target as HTMLInputElement).checked);
+    });
+
+    this.langSelectEl?.addEventListener('change', (e) => {
+      setLocale((e.target as HTMLSelectElement).value);
     });
 
     this.btnEndSession?.addEventListener('click', () => {
@@ -212,6 +240,8 @@ export class LiveCoachApp {
 
     const feedback = await this.agent2Bridge.processAnomaly(anomaly);
 
+    this.lastPromptEl.removeAttribute('data-i18n');
+    this.lastResponseEl.removeAttribute('data-i18n');
     this.lastPromptEl.textContent = this.agent2Bridge.generateCloudPrompt(anomaly);
     this.lastResponseEl.textContent = feedback.visualCue;
 
@@ -239,6 +269,7 @@ export class LiveCoachApp {
   }
 
   showToast(text: string, type: string): void {
+    this.toastText.removeAttribute('data-i18n');
     this.toastText.textContent = text;
     this.toastBanner.classList.remove(
       'hidden',
@@ -265,22 +296,26 @@ export class LiveCoachApp {
   }
 
   updatePhaseUI(phase: string): void {
-    const phaseTranslations: Record<string, { label: string; color: string }> = {
-      IDLE: { label: 'PRÊT', color: '#6B7280' },
-      DESCENT: { label: 'DESCENTE (3s)', color: '#3B82F6' },
-      BOTTOM: { label: 'POINT BAS', color: '#8B5CF6' },
-      ASCENT: { label: 'REMONTÉE (1s)', color: '#10B981' },
-      COMPLETED: { label: 'VALIDÉ', color: '#059669' }
+    const phaseColors: Record<string, string> = {
+      IDLE: '#6B7280',
+      DESCENT: '#3B82F6',
+      BOTTOM: '#8B5CF6',
+      ASCENT: '#10B981',
+      COMPLETED: '#059669'
     };
 
-    const current = phaseTranslations[phase] || { label: phase, color: '#6B7280' };
-    this.phasePillEl.textContent = current.label;
-    this.phasePillEl.style.backgroundColor = current.color;
+    const i18nKey = `phase.${phase}`;
+    const label = t(i18nKey);
+    this.phasePillEl.setAttribute('data-i18n', i18nKey);
+    this.phasePillEl.textContent = label === i18nKey ? phase : label;
+    this.phasePillEl.style.backgroundColor = phaseColors[phase] || '#6B7280';
   }
 
   renderAuditLogs(logs: CloudAuditEntry[]): void {
     if (logs.length === 0) {
-      this.auditTableBody.innerHTML = `<tr><td colspan="5" class="empty-log">Aucun incident pour le moment (Mouvement nominal).</td></tr>`;
+      this.auditTableBody.innerHTML = `<tr><td colspan="5" class="empty-log" data-i18n="audit.empty">${escapeHtml(
+        t('audit.empty')
+      )}</td></tr>`;
       return;
     }
 
@@ -368,31 +403,37 @@ export class LiveCoachApp {
       }
       this.video.srcObject = null;
       this.isWebcamActive = false;
-      this.btnWebcam.textContent = 'Activer la Webcam (WebGPU)';
+      this.btnWebcam.setAttribute('data-i18n', 'controls.enableWebcam');
+      this.btnWebcam.textContent = t('controls.enableWebcam');
       this.btnWebcam.classList.remove('active');
       this.simulator.start();
-      this.modeStatusEl.textContent = 'Mode Simulateur Actif';
+      this.modeStatusEl.setAttribute('data-i18n', 'viewport.modeSim');
+      this.modeStatusEl.textContent = t('viewport.modeSim');
       this.modeStatusEl.className = 'status-tag sim';
     } else {
       try {
         this.simulator.stop();
-        this.modeStatusEl.textContent = 'Connexion à la caméra...';
+        this.modeStatusEl.setAttribute('data-i18n', 'viewport.modeConnecting');
+        this.modeStatusEl.textContent = t('viewport.modeConnecting');
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
         });
         this.video.srcObject = stream;
         await this.video.play();
         this.isWebcamActive = true;
-        this.btnWebcam.textContent = 'Désactiver la Webcam';
+        this.btnWebcam.setAttribute('data-i18n', 'controls.disableWebcam');
+        this.btnWebcam.textContent = t('controls.disableWebcam');
         this.btnWebcam.classList.add('active');
-        this.modeStatusEl.textContent = 'Mode Webcam Direct (WebGPU)';
+        this.modeStatusEl.setAttribute('data-i18n', 'viewport.modeLive');
+        this.modeStatusEl.textContent = t('viewport.modeLive');
         this.modeStatusEl.className = 'status-tag live';
       } catch (err) {
         if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-          window.alert("Impossible d'accéder à la webcam : " + (err as Error).message);
+          window.alert(t('controls.webcamError', { message: (err as Error).message }));
         }
         this.simulator.start();
-        this.modeStatusEl.textContent = 'Mode Simulateur Actif';
+        this.modeStatusEl.setAttribute('data-i18n', 'viewport.modeSim');
+        this.modeStatusEl.textContent = t('viewport.modeSim');
         this.modeStatusEl.className = 'status-tag sim';
       }
     }
@@ -428,6 +469,10 @@ export class LiveCoachApp {
     if (this.toastTimeout) {
       clearTimeout(this.toastTimeout);
       this.toastTimeout = null;
+    }
+    if (this.unsubscribeLocale) {
+      this.unsubscribeLocale();
+      this.unsubscribeLocale = null;
     }
     this.agent2Bridge.disconnect();
   }

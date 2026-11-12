@@ -1,4 +1,5 @@
 import { KinematicMetrics, SquatPhase, AnomalyEvent, AnomalyType, RepScores } from './types';
+import { t } from './i18n';
 
 export interface DetectorCallbacks {
   onPhaseChange?: (newPhase: SquatPhase, repCount: number) => void;
@@ -85,11 +86,11 @@ export class SquatDetector {
 
       case 'DESCENT':
         if (torsoAngle > this.thresholds.maxTorsoLeanAngle) {
-          this.triggerAnomaly('EXCESSIVE_TORSO_LEAN', metrics, 'Buste trop penché vers l’avant', now);
+          this.triggerAnomaly('EXCESSIVE_TORSO_LEAN', metrics, t('anomaly.torsoDescent'), now);
         }
 
         if (valgusRatio < this.thresholds.valgusRatioThreshold) {
-          this.triggerAnomaly('KNEE_VALGUS', metrics, 'Genoux rentrant vers l’intérieur en descente', now);
+          this.triggerAnomaly('KNEE_VALGUS', metrics, t('anomaly.valgusDescent'), now);
         }
 
         if (
@@ -102,7 +103,7 @@ export class SquatDetector {
             this.triggerAnomaly(
               'TEMPO_TOO_FAST',
               { ...metrics, phaseDuration: this.descentDurationMs },
-              `Descente trop brusque (${(this.descentDurationMs / 1000).toFixed(1)}s < 1.5s)`,
+              t('anomaly.tempoFast', { duration: (this.descentDurationMs / 1000).toFixed(1) }),
               now
             );
           }
@@ -117,7 +118,7 @@ export class SquatDetector {
             this.triggerAnomaly(
               'INSUFFICIENT_DEPTH',
               metrics,
-              `Amplitude incomplète (point bas à ${this.minKneeAngleInRep}°)`,
+              t('anomaly.insufficientDepth', { angle: this.minKneeAngleInRep }),
               now
             );
           }
@@ -127,11 +128,11 @@ export class SquatDetector {
 
       case 'ASCENT':
         if (valgusRatio < this.thresholds.valgusRatioThreshold) {
-          this.triggerAnomaly('KNEE_VALGUS', metrics, 'Affaissement des genoux vers l’intérieur à la remontée', now);
+          this.triggerAnomaly('KNEE_VALGUS', metrics, t('anomaly.valgusAscent'), now);
         }
 
         if (torsoAngle > this.thresholds.maxTorsoLeanAngle) {
-          this.triggerAnomaly('EXCESSIVE_TORSO_LEAN', metrics, 'Buste trop incliné en phase de poussée', now);
+          this.triggerAnomaly('EXCESSIVE_TORSO_LEAN', metrics, t('anomaly.torsoAscent'), now);
         }
 
         if (kneeAngle >= this.thresholds.standKneeAngle) {

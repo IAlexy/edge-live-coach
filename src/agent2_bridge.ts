@@ -1,4 +1,5 @@
 import { AnomalyEvent, CloudAuditEntry, CoachingFeedback, RepScores } from './types';
+import { getLocale, t } from './i18n';
 
 export interface BridgeCallbacks {
   onLogUpdated?: (logs: CloudAuditEntry[]) => void;
@@ -122,6 +123,22 @@ export class Agent2Bridge {
    * Construit le prompt textuel sans média.
    */
   generateCloudPrompt(anomaly: AnomalyEvent): string {
+    if (getLocale() === 'en') {
+      return `[BIOMECHANICAL SPORTS SUPERVISOR]
+Event: Real-time anomaly detected
+Exercise: ${anomaly.exercise.toUpperCase()}
+Rep: ${anomaly.repNumber} | Phase: ${anomaly.phase}
+Defect type: ${anomaly.type} (${anomaly.explanation})
+Severity: ${anomaly.severity}
+Telemetry:
+- Knee angle: ${anomaly.metrics.kneeAngle}°
+- Torso angle: ${anomaly.metrics.torsoAngle}°
+- Knee width ratio: ${anomaly.metrics.kneeDistanceRatio} (threshold: 0.72)
+- Phase duration: ${anomaly.metrics.phaseDurationSec}s
+
+Instruction: Provide an immediate action cue to correct the movement (max 7 words, external cueing).`;
+    }
+
     return `[SUPERVISEUR SPORTIF BIOMÉCANIQUE]
 Événement : Anomalie détectée en temps réel
 Exercice : ${anomaly.exercise.toUpperCase()}
@@ -148,30 +165,33 @@ Instruction : Donne une consigne d'action immédiate pour corriger le mouvement 
       this.ws.send(
         JSON.stringify({
           type: 'ANOMALY_EVENT',
-          payload: anomaly
+          payload: {
+            ...anomaly,
+            lang: getLocale()
+          }
         })
       );
     }
 
     // Réponse immédiate réflexe pour latence locale ultra-basse
-    let coachCue = 'Pousse le sol et écarte les genoux !';
+    let coachCue = t('cue.default');
     let actionZone: CoachingFeedback['actionZone'] = 'KNEES';
 
     switch (anomaly.type) {
       case 'KNEE_VALGUS':
-        coachCue = 'Écarte les genoux vers l’extérieur !';
+        coachCue = t('cue.valgus');
         actionZone = 'KNEES';
         break;
       case 'TEMPO_TOO_FAST':
-        coachCue = 'Ralentis la descente, contrôle la charge !';
+        coachCue = t('cue.tempo');
         actionZone = 'TEMPO';
         break;
       case 'INSUFFICIENT_DEPTH':
-        coachCue = 'Descends plus bas, casse la parallèle !';
+        coachCue = t('cue.depth');
         actionZone = 'DEPTH';
         break;
       case 'EXCESSIVE_TORSO_LEAN':
-        coachCue = 'Buste droit, sors la poitrine !';
+        coachCue = t('cue.torso');
         actionZone = 'TORSO';
         break;
     }
@@ -219,7 +239,12 @@ Instruction : Donne une consigne d'action immédiate pour corriger le mouvement 
    */
   requestSessionDebrief(): void {
     if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'END_SESSION' }));
+      this.ws.send(
+        JSON.stringify({
+          type: 'END_SESSION',
+          lang: getLocale()
+        })
+      );
     }
   }
 

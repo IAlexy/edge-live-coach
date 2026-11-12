@@ -3,26 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live-Coach Biomécanique Edge/Cloud (Zéro-Média Privacy)</title>
+    <title data-i18n="app.title">Live-Coach Biomécanique Edge/Cloud (Zéro-Média Privacy)</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <!-- En-tête Global -->
     <header>
       <div class="brand">
-        <h1>Live-Coach Edge / Cloud</h1>
-        <span class="privacy-badge">
+        <h1 data-i18n="header.title">Live-Coach Edge / Cloud</h1>
+        <span class="privacy-badge" data-i18n="header.privacyBadge">
           🛡️ ZÉRO VIDÉO / AUDIO ENREGISTRÉS — Traitement VRAM éphémère
         </span>
       </div>
       <div class="system-status">
         <div class="agent-indicator">
           <span class="dot green"></span>
-          <span><strong>Agent 1 (Edge)</strong> : WebGPU / 60 Hz</span>
+          <span id="edge-status-text" data-i18n="header.agent1Status">Agent 1 (Edge) : WebGPU / 60 Hz</span>
         </div>
         <div class="agent-indicator">
           <span id="cloud-status-dot" class="dot green"></span>
-          <span id="cloud-status-text"><strong>Agent 2 (Cloud)</strong> : Connecté WebSocket</span>
+          <span id="cloud-status-text" data-i18n="header.agent2Connected">Agent 2 (Cloud) : Connecté WebSocket</span>
+        </div>
+        <div class="lang-switcher">
+          <label for="lang-select" class="sr-only" data-i18n="header.langLabel">Langue</label>
+          <select id="lang-select" class="lang-select" aria-label="Langue / Language">
+            <option value="fr">🇫🇷 FR</option>
+            <option value="en">🇬🇧 EN</option>
+          </select>
         </div>
       </div>
     </header>
@@ -33,10 +40,10 @@
       <section class="viewport-card">
         <div class="viewport-header">
           <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="font-weight: 700; font-size: 0.85rem;">SURVEILLANCE BIOMÉCANIQUE (SQUAT)</span>
-            <span id="mode-status" class="status-tag sim">Mode Simulateur Actif</span>
+            <span style="font-weight: 700; font-size: 0.85rem;" data-i18n="viewport.title">SURVEILLANCE BIOMÉCANIQUE (SQUAT)</span>
+            <span id="mode-status" class="status-tag sim" data-i18n="viewport.modeSim">Mode Simulateur Actif</span>
           </div>
-          <span style="font-size: 0.75rem; color: #9ca3af;">Accessibilité : Malentendants (HUD) & Malvoyants (Earcons + TTS)</span>
+          <span style="font-size: 0.75rem; color: #9ca3af;" data-i18n="viewport.accessibilityHint">Accessibilité : Malentendants (HUD) & Malvoyants (Earcons + TTS)</span>
         </div>
 
         <div class="viewport-container">
@@ -47,13 +54,13 @@
           <div class="hud-overlay">
             <!-- Bandeau Coach XXL (Accessible Malentendants) -->
             <div id="coach-toast" class="coach-toast hidden">
-              <span class="toast-badge">CONSIGNE DU COACH</span>
-              <span id="toast-text" class="toast-text">Pousse le sol et écarte les genoux !</span>
+              <span class="toast-badge" data-i18n="hud.coachCueBadge">CONSIGNE DU COACH</span>
+              <span id="toast-text" class="toast-text" data-i18n="hud.defaultToast">Pousse le sol et écarte les genoux !</span>
             </div>
 
             <!-- Jauge de tempo latérale -->
             <div class="tempo-gauge-container">
-              <span class="tempo-label">TEMPO</span>
+              <span class="tempo-label" data-i18n="hud.tempo">TEMPO</span>
               <div class="tempo-bar">
                 <div id="tempo-bar-fill" class="tempo-bar-fill"></div>
               </div>
@@ -62,10 +69,10 @@
             <!-- Compteur de Répétitions et Statut de Phase -->
             <div class="hud-top-right">
               <div class="rep-badge">
-                <div class="label">Reps</div>
+                <div class="label" data-i18n="hud.reps">Reps</div>
                 <div id="rep-count" class="count">0</div>
               </div>
-              <div id="phase-pill" class="phase-pill">PRÊT</div>
+              <div id="phase-pill" class="phase-pill" data-i18n="phase.IDLE">PRÊT</div>
             </div>
           </div>
         </div>
@@ -73,42 +80,42 @@
         <!-- Panneau de Contrôles & Simulateur -->
         <div class="controls-bar">
           <div class="controls-row">
-            <button id="btn-webcam" class="btn-primary">
+            <button id="btn-webcam" class="btn-primary" data-i18n="controls.enableWebcam">
               Activer la Webcam (WebGPU)
             </button>
 
             <!-- Toggles Accessibilité -->
             <div class="accessibility-toggles">
-              <label class="toggle-label" title="Retours sonores rythmiques (Earcons) pour personnes malvoyantes">
+              <label class="toggle-label" title="Retours sonores rythmiques (Earcons) pour personnes malvoyantes" data-i18n-title="controls.audioTitle">
                 <input type="checkbox" id="toggle-audio" checked />
-                <span>🔊 Bips rythmiques (Earcons)</span>
+                <span data-i18n="controls.audioEarcons">🔊 Bips rythmiques (Earcons)</span>
               </label>
-              <label class="toggle-label" title="Lecture vocale des corrections du coach pour personnes malvoyantes">
+              <label class="toggle-label" title="Lecture vocale des corrections du coach pour personnes malvoyantes" data-i18n-title="controls.ttsTitle">
                 <input type="checkbox" id="toggle-tts" checked />
-                <span>🗣️ Synthèse vocale (TTS)</span>
+                <span data-i18n="controls.ttsVoice">🗣️ Synthèse vocale (TTS)</span>
               </label>
             </div>
           </div>
 
           <!-- Banc d'essai d'anomalies (Simulateur biomécanique pour test sans caméra) -->
           <div class="scenarios-section">
-            <div class="scenarios-title">
+            <div class="scenarios-title" data-i18n="scenarios.title">
               Banc d'Essai d'Anomalies (Test instantané de l'Agent 1 & Agent 2)
             </div>
             <div class="scenario-buttons">
-              <button id="btn-sim-nominal" class="btn-scenario active">
+              <button id="btn-sim-nominal" class="btn-scenario active" data-i18n="scenarios.nominal">
                 🟢 Squat Nominal
               </button>
-              <button id="btn-sim-valgus" class="btn-scenario">
+              <button id="btn-sim-valgus" class="btn-scenario" data-i18n="scenarios.valgus">
                 ⚠️ Valgus Genoux
               </button>
-              <button id="btn-sim-fast" class="btn-scenario">
+              <button id="btn-sim-fast" class="btn-scenario" data-i18n="scenarios.fast">
                 ⚠️ Descente Trop Rapide
               </button>
-              <button id="btn-sim-depth" class="btn-scenario">
+              <button id="btn-sim-depth" class="btn-scenario" data-i18n="scenarios.depth">
                 ⚠️ Demi-Squat
               </button>
-              <button id="btn-sim-torso" class="btn-scenario">
+              <button id="btn-sim-torso" class="btn-scenario" data-i18n="scenarios.torso">
                 ⚠️ Buste Penché
               </button>
             </div>
@@ -121,9 +128,9 @@
         <!-- Carte 1 : Tableau de bord de Progression Multi-Facteurs (Stocké en Base) -->
         <div class="telemetry-card">
           <div class="card-title">
-            <span>Évolution & Progression du Geste</span>
+            <span data-i18n="progression.title">Évolution & Progression du Geste</span>
             <span style="font-size: 0.75rem; color: #34d399; font-weight: 800;">
-              Score Global : <span id="score-global">100%</span>
+              <span data-i18n="progression.globalScore">Score Global :</span> <span id="score-global">100%</span>
             </span>
           </div>
 
@@ -131,7 +138,7 @@
           <div class="progression-factors">
             <div class="factor-row">
               <div class="factor-info">
-                <span>🛡️ Stabilité (Valgus)</span>
+                <span data-i18n="progression.stability">🛡️ Stabilité (Valgus)</span>
                 <span id="score-stability" class="factor-val">100%</span>
               </div>
               <div class="score-bar-bg">
@@ -141,7 +148,7 @@
 
             <div class="factor-row">
               <div class="factor-info">
-                <span>⏱️ Contrôle Tempo (3s)</span>
+                <span data-i18n="progression.tempo">⏱️ Contrôle Tempo (3s)</span>
                 <span id="score-tempo" class="factor-val">100%</span>
               </div>
               <div class="score-bar-bg">
@@ -151,7 +158,7 @@
 
             <div class="factor-row">
               <div class="factor-info">
-                <span>📏 Profondeur (&le; 95°)</span>
+                <span data-i18n="progression.depth">📏 Profondeur (&le; 95°)</span>
                 <span id="score-depth" class="factor-val">100%</span>
               </div>
               <div class="score-bar-bg">
@@ -161,7 +168,7 @@
 
             <div class="factor-row">
               <div class="factor-info">
-                <span>🧘 Posture Buste (&le; 32°)</span>
+                <span data-i18n="progression.posture">🧘 Posture Buste (&le; 32°)</span>
                 <span id="score-posture" class="factor-val">100%</span>
               </div>
               <div class="score-bar-bg">
@@ -171,7 +178,7 @@
           </div>
 
           <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-            <button id="btn-end-session" class="btn-primary" style="background: #059669; width: 100%;">
+            <button id="btn-end-session" class="btn-primary" style="background: #059669; width: 100%;" data-i18n="progression.endSessionBtn">
               Terminer la Série & Obtenir le Bilan Cloud
             </button>
             <pre id="debrief-box" class="debrief-box hidden"></pre>
@@ -181,20 +188,20 @@
         <!-- Carte 2 : Télémétrie Instantanée 60 Hz -->
         <div class="telemetry-card">
           <div class="card-title">
-            <span>Télémétrie Cinématique Locale</span>
+            <span data-i18n="telemetry.title">Télémétrie Cinématique Locale</span>
             <span style="font-size: 0.7rem; color: #10b981;">60 Hz</span>
           </div>
           <div class="metrics-grid">
             <div class="metric-box">
-              <div class="label">Angle Genou</div>
+              <div class="label" data-i18n="telemetry.kneeAngle">Angle Genou</div>
               <div id="metric-knee-angle" class="value">180°</div>
             </div>
             <div class="metric-box">
-              <div class="label">Angle Buste</div>
+              <div class="label" data-i18n="telemetry.torsoAngle">Angle Buste</div>
               <div id="metric-torso-angle" class="value">0°</div>
             </div>
             <div class="metric-box">
-              <div class="label">Ratio Valgus</div>
+              <div class="label" data-i18n="telemetry.valgusRatio">Ratio Valgus</div>
               <div id="metric-valgus-ratio" class="value">1.0</div>
             </div>
           </div>
@@ -203,19 +210,19 @@
         <!-- Carte 3 : Inspecteur Événementiel Agent 1 -> Agent 2 -->
         <div class="cloud-inspector-card">
           <div class="card-title">
-            <span>Pont Événementiel Agent 1 ➔ Agent 2</span>
-            <span style="font-size: 0.7rem; color: #3b82f6;">Zéro Pixel / Purement Métrique</span>
+            <span data-i18n="inspector.title">Pont Événementiel Agent 1 ➔ Agent 2</span>
+            <span style="font-size: 0.7rem; color: #3b82f6;" data-i18n="inspector.subtitle">Zéro Pixel / Purement Métrique</span>
           </div>
 
-          <div style="font-size: 0.7rem; color: #9ca3af; font-weight: 700;">
+          <div style="font-size: 0.7rem; color: #9ca3af; font-weight: 700;" data-i18n="inspector.promptLabel">
             PROMPT ENVOYÉ AU CLOUD SUR ANOMALIE :
           </div>
-          <pre id="last-prompt-display" class="prompt-box">En attente d'une anomalie détectée par l'Agent 1...</pre>
+          <pre id="last-prompt-display" class="prompt-box" data-i18n="inspector.waitingAnomaly">En attente d'une anomalie détectée par l'Agent 1...</pre>
 
-          <div style="font-size: 0.7rem; color: #9ca3af; font-weight: 700;">
+          <div style="font-size: 0.7rem; color: #9ca3af; font-weight: 700;" data-i18n="inspector.responseLabel">
             CONSIGNE GÉNÉRÉE PAR L'AGENT 2 (CLOUD LLM) :
           </div>
-          <div id="last-response-display" class="response-box">
+          <div id="last-response-display" class="response-box" data-i18n="inspector.waitingIntervention">
             En attente d'intervention...
           </div>
         </div>
@@ -223,8 +230,8 @@
         <!-- Carte 4 : Journal d'Audit de Confidentialité (Base SQLite) -->
         <div class="audit-card">
           <div class="card-title">
-            <span>Journal d'Audit de Confidentialité (SQLite)</span>
-            <button id="btn-clear-logs" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.75rem;">
+            <span data-i18n="audit.title">Journal d'Audit de Confidentialité (SQLite)</span>
+            <button id="btn-clear-logs" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.75rem;" data-i18n="audit.clearBtn">
               Effacer
             </button>
           </div>
@@ -232,16 +239,16 @@
             <table class="audit-table">
               <thead>
                 <tr>
-                  <th>Heure</th>
-                  <th>Anomalie</th>
-                  <th>Rep</th>
-                  <th>Conseil Fourni</th>
-                  <th>Latence</th>
+                  <th data-i18n="audit.colTime">Heure</th>
+                  <th data-i18n="audit.colAnomaly">Anomalie</th>
+                  <th data-i18n="audit.colRep">Rep</th>
+                  <th data-i18n="audit.colCue">Conseil Fourni</th>
+                  <th data-i18n="audit.colLatency">Latence</th>
                 </tr>
               </thead>
               <tbody id="audit-table-body">
                 <tr>
-                  <td colspan="5" class="empty-log">
+                  <td colspan="5" class="empty-log" data-i18n="audit.empty">
                     Aucun incident pour le moment (Mouvement nominal).
                   </td>
                 </tr>

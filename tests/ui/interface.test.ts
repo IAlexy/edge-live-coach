@@ -5,6 +5,7 @@ import path from 'node:path';
 import { LiveCoachApp } from '../../src/main';
 import { VisualRenderer } from '../../src/visuals';
 import { AnomalyEvent } from '../../src/types';
+import { setLocale } from '../../src/i18n';
 
 const indexHtml = fs.readFileSync(
   path.resolve(process.cwd(), 'index.html'),
@@ -44,6 +45,7 @@ describe('User Interface & HUD Components (UI Tests)', () => {
   let mockCtx: CanvasRenderingContext2D;
 
   beforeEach(() => {
+    setLocale('fr');
     document.documentElement.innerHTML = indexHtml;
     mockCtx = createMockCanvasContext();
     HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(mockCtx) as any;
@@ -221,5 +223,35 @@ describe('User Interface & HUD Components (UI Tests)', () => {
     renderer.render(null, landmarks, metrics);
     expect(mockCtx.strokeRect).toHaveBeenCalled();
     expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('switches UI language dynamically (FR -> EN -> FR) and updates [data-i18n] DOM elements', () => {
+    const langSelect = document.getElementById('lang-select') as HTMLSelectElement;
+    const badge = document.querySelector('.privacy-badge');
+    const modeStatus = document.getElementById('mode-status');
+    const phasePill = document.getElementById('phase-pill');
+    const btnWebcam = document.getElementById('btn-webcam');
+
+    expect(langSelect).not.toBeNull();
+    expect(badge?.textContent).toContain('ZÉRO VIDÉO / AUDIO ENREGISTRÉS');
+    expect(phasePill?.textContent).toBe('PRÊT');
+
+    // Switch to English via select element
+    langSelect.value = 'en';
+    langSelect.dispatchEvent(new Event('change'));
+
+    expect(badge?.textContent).toContain('ZERO VIDEO / AUDIO RECORDED');
+    expect(modeStatus?.textContent).toBe('Simulator Mode Active');
+    expect(phasePill?.textContent).toBe('READY');
+    expect(btnWebcam?.textContent).toBe('Enable Webcam (WebGPU)');
+
+    // Switch back to French
+    langSelect.value = 'fr';
+    langSelect.dispatchEvent(new Event('change'));
+
+    expect(badge?.textContent).toContain('ZÉRO VIDÉO / AUDIO ENREGISTRÉS');
+    expect(modeStatus?.textContent).toBe('Mode Simulateur Actif');
+    expect(phasePill?.textContent).toBe('PRÊT');
+    expect(btnWebcam?.textContent).toBe('Activer la Webcam (WebGPU)');
   });
 });

@@ -89,6 +89,34 @@ header {
 .dot.green { background-color: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
 .dot.blue { background-color: var(--accent-blue); }
 
+.lang-switcher {
+  display: flex;
+  align-items: center;
+}
+
+.lang-select {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Main Grid */
 .container {
   max-width: 1440px;

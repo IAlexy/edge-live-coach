@@ -126,7 +126,8 @@ export function createAppServer(coachAgent = new CloudCoachAgent()): {
           type: String(body.type),
           severity: String(body.severity || 'MODERATE'),
           metrics: body.metrics as AnomalyPayload['metrics'],
-          explanation: String(body.explanation || '')
+          explanation: String(body.explanation || ''),
+          lang: typeof body.lang === 'string' ? body.lang : undefined
         };
 
         const result = await coachAgent.inferCorrection(payload);
@@ -269,7 +270,8 @@ export function createAppServer(coachAgent = new CloudCoachAgent()): {
 
         // 3. Fin de session : Génération du débriefing de progression
         else if (message.type === 'END_SESSION') {
-          const debrief = await coachAgent.generateSessionDebrief(sessionId);
+          const lang = typeof message.lang === 'string' ? message.lang : 'fr';
+          const debrief = await coachAgent.generateSessionDebrief(sessionId, lang);
           ws.send(
             JSON.stringify({
               type: 'SESSION_DEBRIEF',
