@@ -192,6 +192,9 @@ edge-live-coach/
 
 ---
 
-## 📄 Licence
+## 📄 Licence & Conditions d'Utilisation (Non-Commercial Showcase)
 
-Distribué sous licence **MIT**. Voir le fichier [LICENSE](./LICENSE) pour plus d'informations.
+> **Note importante / Portfolio Showcase Notice** :  
+> Ce projet a été conçu à titre de **démonstrateur d'architecture logicielle et de vitrine technique (R&D / Portfolio)**. Il est mis à disposition uniquement à des fins d'évaluation technique, d'apprentissage et de démonstration. **Toute exploitation ou utilisation à des fins commerciales est strictement interdite** sans l'accord écrit préalable de l'auteur.
+>
+> *This project is an engineering & software architecture showcase developed for technical evaluation and educational purposes only. **Commercial use is strictly prohibited** without prior written permission.*
